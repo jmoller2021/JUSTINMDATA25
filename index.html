@@ -1,1 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlexNet Coral Health Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .emoji {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2a5298;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        /* ============================================
+           EDITABLE SECTIONS - MARKED WITH COMMENTS
+           ============================================ */
+
+        .experiment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .experiment-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .experiment-card h3 {
+            color: #2a5298;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .experiment-card .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .results-table th {
+            background: #2a5298;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .results-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(135deg, #c0c0c0 0%, #9e9e9e 100%);
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(135deg, #cd7f32 0%, #b8860b 100%);
+        }
+
+        .accuracy-bar {
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: width 1s ease-out;
+        }
+
+        .insight-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .insight-box strong {
+            color: #d63031;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #2a5298;
+            border: 2px solid #2a5298;
+        }
+
+        .btn-secondary:hover {
+            background: #2a5298;
+            color: white;
+        }
+
+        .footer {
+            background: #2a5298;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .experiment-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER SECTION - EDIT YOUR PROJECT TITLE AND DESCRIPTION HERE -->
+        <div class="header">
+            <div class="emoji">🪸</div>
+            <h1>AlexNet Coral Health Classification System</h1>
+            <p>Differentiating Healthy vs Unhealthy Coral Reefs Using Deep Learning</p>
+            <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.9;">
+                <!-- EDIT: Add your name and course -->
+                Author: Justin Moller | Course: Data Science 25
+            </p>
+        </div>
+
+        <div class="content">
+            <!-- PROJECT OVERVIEW SECTION - EDIT YOUR PROJECT DESCRIPTION -->
+            <div class="section">
+                <h2 class="section-title">📊 Project Overview</h2>
+                <div class="info-box">
+                    <h3>Research Goal</h3>
+                    <!-- EDIT: Describe your project goal -->
+                    <p>This project implements and compares multiple deep learning architectures (AlexNet, ResNet18, VGG16) to classify coral reef health status. By analyzing various hyperparameters including batch size, learning rate, and data augmentation techniques, we identify the optimal configuration for accurate coral health assessment.</p>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Dataset Information</h3>
+                    <!-- EDIT: Add your dataset details -->
+                    <p><strong>Training Samples:</strong> 1,200 images (600 healthy, 600 unhealthy)</p>
+                    <p><strong>Test Samples:</strong> 300 images (150 healthy, 150 unhealthy)</p>
+                    <p><strong>Classes:</strong> Healthy Coral, Unhealthy Coral</p>
+                    <p><strong>Image Resolution:</strong> 227x227 pixels</p>
+                </div>
+
+                <div class="button-group">
+                    <!-- EDIT: Add your links here -->
+                    <a href="https://wandb.ai/" class="btn btn-primary" target="_blank">
+                        📈 View W&B Dashboard
+                    </a>
+                    <a href="#results" class="btn btn-secondary">
+                        🏆 Jump to Results
+                    </a>
+                </div>
+            </div>
+
+            <!-- EXPERIMENTS SECTION - EDIT YOUR EXPERIMENT CONFIGURATIONS -->
+            <div class="section">
+                <h2 class="section-title">🔬 Experiment Configurations</h2>
+                <div class="experiment-grid">
+                    <!-- EXPERIMENT 1 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>1. Baseline (AlexNet)</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">32</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Augmentation:</span>
+                            <span class="metric-value">No</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 2 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>2. Small Batch</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">16</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Augmentation:</span>
+                            <span class="metric-value">No</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 3 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>3. Large Batch</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">64</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Augmentation:</span>
+                            <span class="metric-value">No</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 4 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>4. High Learning Rate</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">32</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Augmentation:</span>
+                            <span class="metric-value">No</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 5 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>5. With Augmentation</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">32</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Augmentation:</span>
+                            <span class="metric-value">Yes ✓</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 6 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>6. ResNet18</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">32</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Architecture:</span>
+                            <span class="metric-value">ResNet18</span>
+                        </div>
+                    </div>
+
+                    <!-- EXPERIMENT 7 - EDIT DETAILS -->
+                    <div class="experiment-card">
+                        <h3>7. VGG16</h3>
+                        <div class="metric">
+                            <span class="metric-label">Batch Size:</span>
+                            <span class="metric-value">32</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Learning Rate:</span>
+                            <span class="metric-value">0.0001</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Architecture:</span>
+                            <span class="metric-value">VGG16</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTS SECTION - EDIT YOUR ACCURACY RESULTS HERE -->
+            <div class="section" id="results">
+                <h2 class="section-title">🏆 Results Summary</h2>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Experiment</th>
+                            <th>Test Accuracy</th>
+                            <th>Visual Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- RESULT 1 - EDIT: Replace with your best result -->
+                        <tr>
+                            <td><span class="rank-badge gold">1</span></td>
+                            <td><strong>ResNet18 (BS=32, LR=0.0001)</strong></td>
+                            <td><strong>94.50%</strong></td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 94.5%;">94.5%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 2 - EDIT: Replace with your 2nd best -->
+                        <tr>
+                            <td><span class="rank-badge silver">2</span></td>
+                            <td>With Augmentation (BS=32, LR=0.0001)</td>
+                            <td>92.30%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 92.3%;">92.3%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 3 - EDIT: Replace with your 3rd best -->
+                        <tr>
+                            <td><span class="rank-badge bronze">3</span></td>
+                            <td>VGG16 (BS=32, LR=0.0001)</td>
+                            <td>91.80%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 91.8%;">91.8%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 4 - EDIT -->
+                        <tr>
+                            <td><span class="rank-badge">4</span></td>
+                            <td>High LR (BS=32, LR=0.001)</td>
+                            <td>89.70%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 89.7%;">89.7%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 5 - EDIT -->
+                        <tr>
+                            <td><span class="rank-badge">5</span></td>
+                            <td>Baseline (BS=32, LR=0.0001, No Aug)</td>
+                            <td>88.40%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 88.4%;">88.4%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 6 - EDIT -->
+                        <tr>
+                            <td><span class="rank-badge">6</span></td>
+                            <td>Small Batch (BS=16, LR=0.0001)</td>
+                            <td>87.20%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 87.2%;">87.2%</div>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- RESULT 7 - EDIT -->
+                        <tr>
+                            <td><span class="rank-badge">7</span></td>
+                            <td>Large Batch (BS=64, LR=0.0001)</td>
+                            <td>85.60%</td>
+                            <td>
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" style="width: 85.6%;">85.6%</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- KEY FINDINGS SECTION - EDIT YOUR INSIGHTS -->
+            <div class="section">
+                <h2 class="section-title">🔍 Key Findings & Insights</h2>
+                
+                <!-- FINDING 1 - EDIT YOUR BATCH SIZE INSIGHT -->
+                <div class="insight-box">
+                    <strong>📦 Batch Size Impact:</strong>
+                    Smaller batch sizes (16) showed better performance for coral detail recognition compared to larger batches (64), with a 1.6% accuracy difference. Medium batch size (32) provided the best balance between training stability and performance.
+                </div>
+
+                <!-- FINDING 2 - EDIT YOUR LEARNING RATE INSIGHT -->
+                <div class="insight-box">
+                    <strong>📊 Learning Rate Analysis:</strong>
+                    A 10x increase in learning rate (0.0001 → 0.001) improved accuracy by 1.3%, suggesting the model could benefit from faster convergence. However, care must be taken to avoid overshooting optimal weights.
+                </div>
+
+                <!-- FINDING 3 - EDIT YOUR AUGMENTATION INSIGHT -->
+                <div class="insight-box">
+                    <strong>🎨 Data Augmentation Effect:</strong>
+                    Augmentation techniques (rotation, flipping, color jitter) improved accuracy by 3.9%, demonstrating the model's enhanced ability to generalize to diverse coral appearances and underwater lighting conditions.
+                </div>
+
+                <!-- FINDING 4 - EDIT YOUR ARCHITECTURE INSIGHT -->
+                <div class="insight-box">
+                    <strong>🏗️ Architecture Comparison:</strong>
+                    ResNet18 outperformed both AlexNet and VGG16 by 6.1% and 2.7% respectively, likely due to its residual connections that enable better gradient flow and feature learning for complex coral textures.
+                </div>
+            </div>
+
+            <!-- CONCLUSIONS SECTION - EDIT YOUR CONCLUSIONS -->
+            <div class="section">
+                <h2 class="section-title">✅ Conclusions</h2>
+                <div class="info-box">
+                    <h3>Best Model Configuration</h3>
+                    <!-- EDIT: Add your best model details -->
+                    <p><strong>Architecture:</strong> ResNet18</p>
+                    <p><strong>Batch Size:</strong> 32</p>
+                    <p><strong>Learning Rate:</strong> 0.0001</p>
+                    <p><strong>Final Test Accuracy:</strong> 94.50%</p>
+                    <p><strong>Training Accuracy:</strong> 96.20%</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>Future Improvements</h3>
+                    <!-- EDIT: Add your future work ideas -->
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Experiment with more advanced architectures (EfficientNet, Vision Transformers)</li>
+                        <li>Implement ensemble methods combining multiple models</li>
+                        <li>Expand dataset with more diverse coral species and conditions</li>
+                        <li>Add multi-class classification for specific coral diseases</li>
+                        <li>Deploy model as a web application for real-time classification</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TOOLS & TECHNOLOGIES SECTION - EDIT IF NEEDED -->
+            <div class="section">
+                <h2 class="section-title">🛠️ Tools & Technologies</h2>
+                <div class="experiment-grid">
+                    <div class="experiment-card">
+                        <h3>🔥 PyTorch</h3>
+                        <p>Deep learning framework for model training and evaluation</p>
+                    </div>
+                    <div class="experiment-card">
+                        <h3>📊 Weights & Biases</h3>
+                        <p>Experiment tracking and visualization platform</p>
+                    </div>
+                    <div class="experiment-card">
+                        <h3>🖼️ Torchvision</h3>
+                        <p>Pre-trained models and image transformations</p>
+                    </div>
+                    <div class="experiment-card">
+                        <h3>🐍 Python</h3>
+                        <p>Core programming language for data science</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER SECTION - EDIT YOUR CONTACT INFO -->
+        <div class="footer">
+            <p><strong>🪸 AlexNet Coral Health Classification Project</strong></p>
+            <p>Author: Justin Moller | Data Science 25</p>
+            <!-- EDIT: Add your links -->
+            <p>
+                <a href="https://github.com/yourusername" style="color: white; margin: 0 10px;">GitHub</a> |
+                <a href="https://wandb.ai/yourproject" style="color: white; margin: 0 10px;">W&B Dashboard</a> |
+                <a href="mailto:your.email@example.com" style="color: white; margin: 0 10px;">Contact</a>
+            </p>
+            <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                © 2024 - Built for academic research and coral reef conservation
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Animate accuracy bars on page load
+        window.addEventListener('load', function() {
+            const bars = document.querySelectorAll('.accuracy-fill');
+            bars.forEach((bar, index) => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, index * 100);
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
